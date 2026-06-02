@@ -1,0 +1,12 @@
+{
+  "name": "hostinger",
+  "description": "Deploy, manage and monitor Hostinger services — Web hosting, VPS, Domains, DNS, Billing, and Email marketing. Authenticate via browser (OAuth) or API token.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Hostinger",
+    "url": "https://www.hostinger.com"
+  },
+  "homepage": "https://developers.hostinger.com",
+  "repository": "https://github.com/nicka-hostinger/api-mcp-server",
+  "license": "MIT"
+}
