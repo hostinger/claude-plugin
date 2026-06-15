@@ -6,12 +6,12 @@ Deploy, manage and monitor your Hostinger services directly from Claude Code.
 
 | MCP Server | Description |
 |---|---|
-| Web Hosting | Deploy websites, manage hosting plans, SSH keys, build logs |
+| Websites | Deploy websites, manage hosting plans, SSH keys, build logs |
+| Domains | Search, register, manage domain portfolio, DNS records and snapshots |
+| Ecommerce | Online stores, product catalogs, ecommerce tools |
+| Email Marketing | Contacts, contact groups, segments, profiles |
+| Subscriptions & Payments | Subscriptions, payment methods, catalog, orders |
 | VPS | Virtual servers, firewalls, snapshots, monitoring |
-| Domains | Search, register, manage domain portfolio |
-| DNS | DNS records, snapshots, validation |
-| Billing | Subscriptions, payment methods, catalog |
-| Reach | Email marketing contacts, segments, profiles |
 
 ## Installation
 
