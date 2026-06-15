@@ -1,6 +1,6 @@
 {
   "name": "hostinger",
-  "description": "Deploy, manage and monitor Hostinger services — Web hosting, VPS, Domains, DNS, Billing, and Email marketing. Authenticate via browser (OAuth) or API token.",
+  "description": "Deploy, manage and monitor Hostinger services — Websites, Domains, Ecommerce, Email Marketing, Subscriptions & Payments, and VPS. Authenticate via browser (OAuth) or API token.",
   "version": "1.0.0",
   "author": {
     "name": "Hostinger",
