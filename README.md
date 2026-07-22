@@ -43,4 +43,4 @@ export HOSTINGER_API_TOKEN="your-token-here"
 
 - [Hostinger API Documentation](https://developers.hostinger.com)
 - [VS Code Extension](https://marketplace.visualstudio.com/items?itemName=hostinger.hostinger-connector)
-- [Report Issues](https://github.com/nicka-hostinger/api-mcp-server/issues)
+- [Report Issues](https://github.com/hostinger/claude-plugin/issues)
