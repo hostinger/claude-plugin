@@ -4,19 +4,23 @@ Deploy, manage and monitor your Hostinger services directly from Claude Code.
 
 ## What's included
 
-| MCP Server | Description |
+A single Hostinger MCP server (auto-updates to the latest version) covering:
+
+| Service | Description |
 |---|---|
 | Websites | Deploy websites, manage hosting plans, SSH keys, build logs |
-| Domains | Search, register, manage domain portfolio, DNS records and snapshots |
+| Domains & DNS | Search, register, manage domain portfolio, DNS records and snapshots |
 | Ecommerce | Online stores, product catalogs, ecommerce tools |
 | Email Marketing | Contacts, contact groups, segments, profiles |
+| Email | Mailboxes and email service management |
+| WordPress | WordPress site management |
 | Subscriptions & Payments | Subscriptions, payment methods, catalog, orders |
 | VPS | Virtual servers, firewalls, snapshots, monitoring |
 
 ## Installation
 
 ```bash
-/plugin install hostinger@claude-community
+/plugin install hostinger@claude-plugins-official
 ```
 
 ## Authentication
