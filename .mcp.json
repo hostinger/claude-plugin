@@ -1,32 +1,8 @@
 {
   "mcpServers": {
-    "hostinger-hosting": {
+    "hostinger": {
       "command": "npx",
-      "args": ["--package=hostinger-api-mcp@latest", "hostinger-hosting-mcp"]
-    },
-    "hostinger-domains": {
-      "command": "npx",
-      "args": ["--package=hostinger-api-mcp@latest", "hostinger-domains-mcp"]
-    },
-    "hostinger-dns": {
-      "command": "npx",
-      "args": ["--package=hostinger-api-mcp@latest", "hostinger-dns-mcp"]
-    },
-    "hostinger-ecommerce": {
-      "command": "npx",
-      "args": ["--package=hostinger-api-mcp@latest", "hostinger-ecommerce-mcp"]
-    },
-    "hostinger-reach": {
-      "command": "npx",
-      "args": ["--package=hostinger-api-mcp@latest", "hostinger-reach-mcp"]
-    },
-    "hostinger-billing": {
-      "command": "npx",
-      "args": ["--package=hostinger-api-mcp@latest", "hostinger-billing-mcp"]
-    },
-    "hostinger-vps": {
-      "command": "npx",
-      "args": ["--package=hostinger-api-mcp@latest", "hostinger-vps-mcp"]
+      "args": ["hostinger-api-mcp@latest"]
     }
   }
 }
