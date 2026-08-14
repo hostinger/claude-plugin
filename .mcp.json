@@ -2,7 +2,7 @@
   "mcpServers": {
     "hostinger": {
       "command": "npx",
-      "args": ["hostinger-api-mcp@latest"]
+      "args": ["hostinger-api-mcp@1.35.6"]
     }
   }
 }

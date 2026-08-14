@@ -4,7 +4,7 @@ Deploy, manage and monitor your Hostinger services directly from Claude Code.
 
 ## What's included
 
-A single Hostinger MCP server (auto-updates to the latest version) covering:
+A single Hostinger MCP server, pinned to version `1.35.6` for reproducible sessions, covering:
 
 | Service | Description |
 |---|---|
