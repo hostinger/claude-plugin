@@ -1,8 +1,8 @@
 {
   "mcpServers": {
     "hostinger": {
-      "command": "npx",
-      "args": ["hostinger-api-mcp@1.35.6"]
+      "type": "http",
+      "url": "https://mcp.hostinger.com"
     }
   }
 }
