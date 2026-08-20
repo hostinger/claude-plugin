@@ -1,10 +1,9 @@
 ---
 name: hosting-deploy-wordpress-plugin
 description: >-
-  Deploy a WordPress plugin (a directory of files, not a single archive) to a Hostinger "hosting"
-  WordPress website via public-api, using standalone MCP tools/plain curl instead of a
-  filesystem-driven deploy tool. Use when asked to deploy/upload a WP plugin, or replicate what
-  public-api-generator's hosting_deployWordpressPlugin tool does step by step.
+  Deploy a WordPress plugin (a directory of files, not a single archive) to a Hostinger
+  "hosting" WordPress website via public-api, using standalone MCP tools/plain curl instead of a
+  filesystem-driven deploy tool. Use when asked to deploy/upload a WP plugin.
 ---
 
 # Deploy a WordPress plugin to hosting
@@ -56,16 +55,16 @@ there is no zipping step.
 5. **Trigger deploy** once all files uploaded successfully: call `hosting_deployWordPressPluginV1`
    with body:
    ```json
-   { "slug": "my-plugin", "plugin_path": "my-plugin-a1b2c3d4" }
+   { "username": "...", "domain": "...", "slug": "my-plugin", "plugin_path": "my-plugin-a1b2c3d4" }
    ```
    `plugin_path` is the upload directory name from step 3 (not a full path) — the plugin will be
    activated and made available in the WordPress admin panel.
 
 ## Verify
 
-Call `hosting_listInstalledWordPressPluginsV1` and confirm `{slug}` is listed with the
-expected version. If you passed `is_activated: true`, check it is reported active —
-a successful upload does not guarantee activation.
+Call `hosting_listInstalledWordPressPluginsV1` and confirm `{slug}` is listed and reported
+active — this tool always activates the plugin, and a successful upload does not by itself
+mean the deploy step succeeded.
 
 ## Note
 
