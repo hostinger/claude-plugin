@@ -3,8 +3,7 @@ name: hosting-deploy-nodejs-app
 description: >-
   Deploy a Node.js application (needs a build step) to a Hostinger "hosting" website via
   public-api, using standalone MCP tools/plain curl instead of a filesystem-driven deploy tool.
-  Use when asked to deploy/build a Node.js/JS app on hosting (not Agency Plan), or replicate what
-  public-api-generator's hosting_deployJsApplication tool does step by step.
+  Use when asked to deploy/build a Node.js/JS app on hosting (not Agency Plan).
 ---
 
 # Deploy a Node.js app to hosting
@@ -53,6 +52,8 @@ runs install automatically).
 5. **Start the build**: call `hosting_startNode_jsBuildV1` with body:
    ```json
    {
+     "username": "...",
+     "domain": "...",
      "node_version": 20,
      "app_type": "...",
      "root_directory": "...",

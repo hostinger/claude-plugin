@@ -3,8 +3,7 @@ name: hosting-deploy-wordpress-theme
 description: >-
   Deploy a WordPress theme (a directory of files, not a single archive) to a Hostinger "hosting"
   WordPress website via public-api, using standalone MCP tools/plain curl instead of a
-  filesystem-driven deploy tool. Use when asked to deploy/upload a WP theme, or replicate what
-  public-api-generator's hosting_deployWordpressTheme tool does step by step.
+  filesystem-driven deploy tool. Use when asked to deploy/upload a WP theme.
 ---
 
 # Deploy a WordPress theme to hosting
@@ -54,7 +53,7 @@ there is no zipping step.
 5. **Trigger deploy** once all files uploaded successfully: call `hosting_deployWordPressThemeV1`
    with body:
    ```json
-   { "slug": "my-theme", "theme_path": "my-theme-a1b2c3d4", "is_activated": false }
+   { "username": "...", "domain": "...", "slug": "my-theme", "theme_path": "my-theme-a1b2c3d4", "is_activated": false }
    ```
    `theme_path` is the upload directory name from step 3 (not a full path). `is_activated`
    is optional (default `false`) — set `true` to activate the theme after deploy.

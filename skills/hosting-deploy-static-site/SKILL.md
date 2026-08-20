@@ -3,8 +3,7 @@ name: hosting-deploy-static-site
 description: >-
   Deploy a pre-built static site (HTML/CSS/JS, no build step) to a Hostinger "hosting" website
   via public-api, using standalone MCP tools/plain curl instead of a filesystem-driven deploy
-  tool. Use when asked to deploy/upload a static site to hosting (not Agency Plan), or replicate
-  what public-api-generator's hosting_deployStaticWebsite tool does step by step.
+  tool. Use when asked to deploy/upload a static site to hosting (not Agency Plan).
 ---
 
 # Deploy a static site to hosting
@@ -44,7 +43,13 @@ host directly via TUS, authenticated with the `auth_key`/`rest_auth_key` from
    # -> 204, Upload-Offset response header == SIZE means done
    ```
    `?override=true` means a re-upload of the same path replaces it — safe to retry.
-4. **Trigger deploy**: call `hosting_deployStaticSiteArchiveV1` with body `{"archive_path": "site.zip"}` (bare filename from step 3, no other fields accepted).
+4. **Trigger deploy**: call `hosting_deployStaticSiteArchiveV1` with:
+   ```json
+   { "username": "...", "domain": "...", "archive_path": "site.zip" }
+   ```
+   `archive_path` is the bare filename from step 3 — no directory, no other body fields.
+   `username` and `domain` are URL path params in the REST API, but the MCP tool takes
+   them as ordinary arguments — pass all of them.
 
 ## Verify
 

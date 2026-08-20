@@ -20,8 +20,8 @@ A single remote Hostinger MCP server at `https://mcp.hostinger.com`, covering:
 | Subscriptions & Payments | Subscriptions, payment methods, catalog, orders |
 | VPS | Virtual servers, firewalls, snapshots, monitoring |
 
-Plus seven **deployment skills** that teach the agent how to get your files onto
-Hostinger without a local MCP server:
+Plus seven **deployment skills** that let the agent push your project files to
+Hostinger and deploy them:
 
 | Skill | Use for |
 |---|---|
@@ -30,8 +30,8 @@ Hostinger without a local MCP server:
 | `hosting-deploy-wordpress-site` | Import a WordPress site (archive + SQL dump) |
 | `hosting-deploy-wordpress-plugin` | Deploy a WordPress plugin |
 | `hosting-deploy-wordpress-theme` | Deploy a WordPress theme |
-| `agency-hosting-deploy-static-site` | Agency Plan (h5g) static / node-static site |
-| `agency-hosting-deploy-php-site` | Agency Plan (h5g) PHP app, extracted as-is |
+| `agency-hosting-deploy-static-site` | Agency Plan static / node-static site |
+| `agency-hosting-deploy-php-site` | Agency Plan PHP app, deployed as-is |
 
 The agent picks the right one from your request — you don't invoke them by name.
 
@@ -79,10 +79,9 @@ stages, all driven by the agent:
 The skills document each variant of this flow, including the destructive steps
 that overwrite a site's contents.
 
-> **Deployment needs a shell.** Steps 2 requires the agent to run `curl`, so
-> deploys work wherever the agent has shell access (Claude Code, and the Code tab
-> of the desktop app). Everything else — domains, DNS, VPS, WordPress
-> management, email — works everywhere.
+> **Deployment requires an agent with shell access**, since the upload step runs
+> `curl`. Everything else — domains, DNS, VPS, WordPress management, email —
+> works anywhere the plugin is available.
 
 ## Links
 

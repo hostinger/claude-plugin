@@ -3,8 +3,7 @@ name: agency-hosting-deploy-php-site
 description: >-
   Deploy a PHP (or other no-build) Agency Plan website from an archive via public-api, using
   standalone MCP tools/plain curl instead of a filesystem-driven deploy tool. Use when asked to
-  deploy a PHP app to an Agency Plan / h5g / agency-hosting website, or replicate what
-  public-api-generator's agency-hosting_deployPhpApplication tool does step by step.
+  deploy a PHP app to an Agency Plan / h5g / agency-hosting website.
 ---
 
 # Deploy a PHP app to an Agency Plan website

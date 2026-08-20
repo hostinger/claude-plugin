@@ -3,9 +3,8 @@ name: agency-hosting-deploy-static-site
 description: >-
   Deploy a node-static Agency Plan website (Node.js-built static site, or a plain simple static
   site) from an archive via public-api, using standalone MCP tools/plain curl instead of a
-  filesystem-driven deploy tool. Use when asked to deploy/build a static or node-static app on an
-  Agency Plan / h5g / agency-hosting website, or replicate what public-api-generator's
-  agency-hosting_deployNodeStaticWebsite tool does step by step.
+  filesystem-driven deploy tool. Use when asked to deploy/build a static or node-static app on
+  an Agency Plan / h5g / agency-hosting website.
 ---
 
 # Deploy a node-static app to an Agency Plan website
