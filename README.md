@@ -20,20 +20,22 @@ A single remote Hostinger MCP server at `https://mcp.hostinger.com`, covering:
 | Subscriptions & Payments | Subscriptions, payment methods, catalog, orders |
 | VPS | Virtual servers, firewalls, snapshots, monitoring |
 
-Plus seven **deployment skills** that let the agent push your project files to
-Hostinger and deploy them:
+Plus seven **web hosting skills** for Shared, Cloud and Agency plans:
 
 | Skill | Use for |
 |---|---|
-| `hosting-deploy-static-site` | Pre-built static site (no build step) |
-| `hosting-deploy-nodejs-app` | Node.js app — built on Hostinger |
-| `hosting-deploy-wordpress-site` | Import a WordPress site (archive + SQL dump) |
-| `hosting-deploy-wordpress-plugin` | Deploy a WordPress plugin |
-| `hosting-deploy-wordpress-theme` | Deploy a WordPress theme |
-| `agency-hosting-deploy-static-site` | Agency Plan static / node-static site |
-| `agency-hosting-deploy-php-site` | Agency Plan PHP app, deployed as-is |
+| `troubleshoot-website` | A site that is down, slow, erroring, insecure or failing to build — cause and fix |
+| `connect-domain` | Attach a domain, point DNS without losing email records, install SSL |
+| `deploy-to-hosting` | Deploy static sites, Node.js apps, PHP apps, WordPress plugins and themes; Git auto-deploy, environment variables, databases |
+| `maintain-wordpress` | Updates and vulnerability checks across one or all WordPress sites |
+| `audit-hosting` | Read-only review of the whole hosting account with a prioritised to-do list |
+| `migrate-to-hosting` | Move a site from another host, tested before DNS moves |
+| `hostinger-headless` | Build a new site from a prompt, optionally with a store or a WordPress backend |
 
-The agent picks the right one from your request — you don't invoke them by name.
+The agent picks the right one from your request; you can also name a skill. The
+skills come from [hostinger/api-mcp-server](https://github.com/hostinger/api-mcp-server)
+and are synced into `skills/` with `node scripts/sync-skills.mjs` — change them
+upstream, not here.
 
 ## Installation
 
@@ -68,16 +70,18 @@ export HOSTINGER_API_TOKEN="your-token-here"
 The remote server can't read files off your machine, so deploys run in three
 stages, all driven by the agent:
 
-1. **Get a short-lived upload URL** — `hosting_generateUploadURLV1` (or the
-   `agency-hosting` equivalent) returns a URL plus `auth_key` / `rest_auth_key`.
+1. **Get a short-lived upload URL** — `hosting_files_generate-upload-url` (or
+   `agency-hosting_files_generate-upload-url`) returns a URL plus `auth_key` /
+   `rest_auth_key`.
 2. **Upload the archive over TUS** — plain `curl`, authenticated with those keys.
    This is the one step with no tool wrapper, because it talks to the file-storage
    host directly.
 3. **Trigger the deploy or build** — an MCP tool call referencing the uploaded
-   filename.
+   file, e.g. `hosting_websites_deploy-static-site-archive` or
+   `hosting_nodejs_start-build`.
 
-The skills document each variant of this flow, including the destructive steps
-that overwrite a site's contents.
+The `deploy-to-hosting` skill documents each variant of this flow, including the
+destructive steps that overwrite a site's contents.
 
 > **Deployment requires an agent with shell access**, since the upload step runs
 > `curl`. Everything else — domains, DNS, VPS, WordPress management, email —
