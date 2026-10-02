@@ -16,7 +16,7 @@ function resolveSkillsRoot() {
     return { root, label: root };
   }
 
-  const spec = `hostinger-api-mcp@${source}`;
+  const spec = `@hostinger/mcp@${source}`;
   const packed = execFileSync("npm", ["pack", spec, "--silent", "--pack-destination", work], {
     encoding: "utf8",
   })
@@ -27,7 +27,7 @@ function resolveSkillsRoot() {
 
   const pkgRoot = path.join(work, "package");
   const { version } = JSON.parse(readFileSync(path.join(pkgRoot, "package.json"), "utf8"));
-  return { root: path.join(pkgRoot, "skills"), label: `hostinger-api-mcp@${version}` };
+  return { root: path.join(pkgRoot, "skills"), label: `@hostinger/mcp@${version}` };
 }
 
 function skillName(skillFile) {
