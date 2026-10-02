@@ -26,7 +26,7 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-      # PRs opened with GITHUB_TOKEN don't trigger other workflows, so use the App.
+      # Bot commits are signed and pushed with the App token, like the other plugin repos.
       - name: Get GitHub token
         uses: actions/create-github-app-token@v2
         id: token
@@ -47,7 +47,8 @@ jobs:
         env:
           INPUT_VERSION: ${{ inputs.version }}
         run: |
-          V="${INPUT_VERSION:-$(npm view @hostinger/mcp version)}"
+          V=$(npm view "@hostinger/mcp@${INPUT_VERSION:-latest}" version)
+          if ! [[ "$V" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then echo "::error::Unresolvable @hostinger/mcp version '${INPUT_VERSION:-latest}'"; exit 1; fi
           echo "version=$V" >> "$GITHUB_OUTPUT"
 
       - name: Sync skills
@@ -59,10 +60,12 @@ jobs:
       # chore/mcp-sync PR, which is what we want once main has caught up.
       - name: Bump version
         id: bump
+        env:
+          V: ${{ steps.version.outputs.version }}
         run: |
           git add -A
           if git diff --cached --quiet; then
-            echo "Already in sync."
+            echo "Already in sync with @hostinger/mcp $V."
             exit 0
           fi
           OLD=$(jq -r .version .claude-plugin/plugin.json)
