@@ -1,0 +1,91 @@
+name: mcp-sync
+
+# Opens (or refreshes) one PR that brings skills/ up to a published
+# @hostinger/mcp release. Every run rebuilds from main, so several releases
+# between merges collapse into one PR and one bump. The claude-plugins-official
+# marketplace pin still has to be bumped by hand after merging.
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "@hostinger/mcp version (default: latest)"
+        required: false
+        type: string
+
+concurrency:
+  group: mcp-sync
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      # Bot commits are signed and pushed with the App token, like the other plugin repos.
+      - name: Get GitHub token
+        uses: actions/create-github-app-token@v2
+        id: token
+        with:
+          app-id: ${{ secrets.HOSTINGERBOT_APP_ID }}
+          private-key: ${{ secrets.HOSTINGERBOT_PRIVATE_KEY }}
+
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Resolve version
+        id: version
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          V=$(npm view "@hostinger/mcp@${INPUT_VERSION:-latest}" version)
+          if ! [[ "$V" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then echo "::error::Unresolvable @hostinger/mcp version '${INPUT_VERSION:-latest}'"; exit 1; fi
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+
+      - name: Sync skills
+        env:
+          V: ${{ steps.version.outputs.version }}
+        run: node scripts/sync-skills.mjs "$V"
+
+      # No early exit on an empty diff: create-pull-request then closes a stale
+      # chore/mcp-sync PR, which is what we want once main has caught up.
+      - name: Bump version
+        id: bump
+        env:
+          V: ${{ steps.version.outputs.version }}
+        run: |
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Already in sync with @hostinger/mcp $V."
+            exit 0
+          fi
+          OLD=$(jq -r .version .claude-plugin/plugin.json)
+          IFS=. read -r MAJOR MINOR PATCH <<< "$OLD"
+          NEW="$MAJOR.$MINOR.$((PATCH + 1))"
+          jq --arg v "$NEW" '.version = $v' .claude-plugin/plugin.json > plugin.tmp
+          mv plugin.tmp .claude-plugin/plugin.json
+          echo "new=$NEW" >> "$GITHUB_OUTPUT"
+
+      - name: Open or update the sync PR
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ steps.token.outputs.token }}
+          branch: chore/mcp-sync
+          base: main
+          delete-branch: true
+          sign-commits: true
+          add-paths: .
+          commit-message: "chore: sync with @hostinger/mcp ${{ steps.version.outputs.version }}"
+          title: "chore: sync with @hostinger/mcp ${{ steps.version.outputs.version }}"
+          body: |
+            Synced skills with `@hostinger/mcp` ${{ steps.version.outputs.version }}; version bumped to ${{ steps.bump.outputs.new }}.
+            After merging, the claude-plugins-official marketplace pin still needs a manual bump.
