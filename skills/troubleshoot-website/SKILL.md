@@ -35,7 +35,7 @@ dig +short NS DOMAIN; dig +short A DOMAIN; dig +short CAA DOMAIN
 - Hostinger responses carry `platform: hostinger` and `panel: hpanel`. Without them, or with DNS pointing elsewhere, traffic is not reaching this hosting — hand over to the `connect-domain` skill.
 - Certificate or TLS errors → [SSL](#ssl).
 - `5xx`, a blank page or an error page → [By website type](#3-by-website-type).
-- `200` with old content → cache: `hosting_cache_clear-website` (also purges the Hostinger CDN; pass `directory` for WordPress in a subfolder), plus `wordpress_litespeed-cache_purge-lite-speed` for WordPress; Agency: `agency-hosting_cache_clear-website`.
+- `200` with old content → cache: `hosting_cache_clear` (also purges the Hostinger CDN; pass `directory` for WordPress in a subfolder), plus `wordpress_litespeed-cache_purge-lite-speed` for WordPress; Agency: `agency-hosting_cache_clear-website`.
 - Slow first byte → [Slow site](#slow-site). Behind the Hostinger CDN, `x-hcdn-upstream-rt` is the origin's own response time in seconds; a small value there means the server is not the bottleneck.
 
 ## 3. By website type
@@ -44,9 +44,9 @@ dig +short NS DOMAIN; dig +short A DOMAIN; dig +short CAA DOMAIN
 
 ### Node.js (`nodejs`)
 
-Batch `hosting_nodejs_list-builds` (`per_page: 3`), `hosting_nodejs_runtime-logs` (`period: "1h"`, `levels: ["ERROR", "WARN"]`) and `hosting_nodejs_list-environment-variables` (keys only; values always come back masked).
+Batch `hosting_get-deployment` (the latest build with its log, failure analysis and stored settings), `hosting_nodejs_runtime-logs` (`period: "1h"`, `levels: ["ERROR", "WARN"]`) and `hosting_nodejs_list-environment-variables` (keys only; values always come back masked).
 
-- Latest build `failed`: call `hosting_nodejs_analyse-failed-build` once for that build — every call re-runs the analysis and the limit is 5 a minute. When it returns nulls, read `hosting_nodejs_build-logs`. A wrongly detected framework, output directory or missing `entry_file` is the usual cause: compare `hosting_nodejs_build-settings` with the project, rebuild with corrected values through `hosting_nodejs_start-build`, and store the same values with `hosting_nodejs_update-build-settings` so Git pushes build correctly too.
+- Latest build `failed`: `hosting_get-deployment` already holds the `analysis` (fetched once per build — the API re-runs it on every call and allows 5 a minute). A wrongly detected framework, output directory or missing `entry_file` is the usual cause: compare the returned `buildSettings` with the project and deploy again with corrected `appType`, `outputDirectory`, `buildScript` or `entryFile`; a Git deploy stores them, so pushes build correctly too. A site deployed on the hosted server from uploaded files has no `hosting_deploy` to repeat: rebuild through `hosting_nodejs_start-build` with the corrected values and store them with `hosting_nodejs_update-build-settings`.
 - Build `completed` but the app errors: read the runtime logs; entries older than `last_deployed_at` belong to the previous deploy. A variable the code reads but the key list lacks is fixed with the `deploy-to-hosting` skill's environment step. `Access denied for user '…'@'::1'` means the app connects to `localhost` — `DB_HOST` must be `127.0.0.1`.
 - Hung process: `hosting_nodejs_restart-application` (restarts without rebuilding).
 
@@ -76,19 +76,19 @@ Batch `hosting_nodejs_list-builds` (`per_page: 3`), `hosting_nodejs_runtime-logs
 
 ## SSL
 
-Shared and Cloud, `hosting_ssl_status`:
+Shared and Cloud, `ssl` in `hosting_websites_get-settings`:
 
-- `not_installed` or `failed` (`last_error` says why): the domain must resolve to Hostinger, and any CAA record must allow `letsencrypt.org`, before `hosting_ssl_install` can succeed. Poll the status until `active` or `failed`.
+- `not_installed` or `failed` (`last_error` says why): the domain must resolve to Hostinger, and any CAA record must allow `letsencrypt.org`, before `hosting_ssl_install` can succeed. Poll `hosting_websites_get-settings` until `ssl.status` is `active` or `failed`.
 - `installing` or `waiting_for_retry`: wait — another install request returns 422.
 - Free `*.hostingersite.com` subdomains use a platform certificate; installing returns 422 by design.
-- Browser still warns while the certificate is `active`: turn on the redirect with `hosting_ssl_toggle-https-redirect` when `is_https_redirect_enabled` is false, otherwise the page loads `http://` assets (mixed content) that the app has to change.
+- Browser still warns while the certificate is `active`: turn on the redirect with `hosting_websites_update-settings` (`httpsRedirect: true`) when `is_https_redirect_enabled` is false, otherwise the page loads `http://` assets (mixed content) that the app has to change.
 
 Agency, `agency-hosting_ssl_website-status` for each domain: every domain allows three certificate setups per seven days and one request a minute. Check `agency-hosting_websites_list-processes` before `agency-hosting_ssl_install-website` or `agency-hosting_ssl_reinstall-website`, and never retry in a loop.
 
 ## Slow site
 
 - WordPress: `wordpress_litespeed-cache_show-lite-speed-status` and `wordpress_object-cache_show-memcached-status`. Turning on Memcached with `wordpress_object-cache_toggle-memcached` is the usual quick win.
-- Other sites: server caching may be off or development mode left on, and neither has a read operation. `hosting_cache_toggle-website` with `enabled: true` does nothing when caching is already on; `hosting_cache_toggle-cacheless` with `enabled: false` turns development mode off.
+- Other sites: server caching may be off or development mode left on. `hosting_websites_get-settings` shows both in `cache` (`is_enabled`, `is_cacheless_mode_enabled`); fix them with `hosting_websites_update-settings` (`cache: true`, `cachelessMode: false`). Development mode takes a few minutes to turn off.
 - PHP 7.x runs markedly slower than 8.x; propose a supported 8.x version from `hosting_php_get` when the app allows it.
 - Agency: `agency-hosting_metrics_list-order-resource-usage` with `time_frame_hours: 24` shows CPU, memory and processes per website against the plan quota.
 - Shared and Cloud have no CPU or memory metrics in the API. When the evidence points at resource limits, send the user to hPanel's resource usage page.

@@ -28,10 +28,10 @@ dig +short MX DOMAIN; dig +short TXT DOMAIN; dig +short CAA DOMAIN
 
 Shared and Cloud:
 
-- **New website on the domain.** For a domain outside this account run `hosting_domains_verify-ownership` first. When `is_accessible` is false, give the user the `TXT` record it returns to add next to the existing ones, then verify again (propagation takes up to ~10 minutes). Create with `hosting_websites_create` (`domain` without `www.`, `order_id`), then poll `hosting_websites_list-setups` with `domain` every 10–15 s until `status: completed`.
-- **Moving a site off its free subdomain.** Shared and Cloud websites cannot be renamed through the API. Either create a website on the real domain and redeploy the project there (the `deploy-to-hosting` skill) — required for WordPress, which keeps its URL in the database — or, for static sites, park the domain on the existing site with `hosting_domains_create-website-parked`.
-- **Alias** (a second domain showing the same site): `hosting_domains_create-website-parked`.
-- **Subdomain** (`shop.example.com`): `hosting_domains_create-website-subdomain`. `www` belongs to the main domain — do not create it as a subdomain.
+- **New website on the domain.** For a domain outside this account run `hosting_domains_verify-ownership` first. When `is_accessible` is false, give the user the `TXT` record it returns to add next to the existing ones, then verify again (propagation takes up to ~10 minutes). Create with `hosting_websites_create` (`order_id`, `domain` without `www.`), then poll `hosting_websites_list-setups` with `domain` every 10–15 s until `status: completed`.
+- **Moving a site off its free subdomain.** Shared and Cloud websites cannot be renamed through the API. Either create a website on the real domain and redeploy the project there (the `deploy-to-hosting` skill) — required for WordPress, which keeps its URL in the database — or, for static sites, park the domain on the existing site with `hosting_websites_add-domain` (`type: "parked"`).
+- **Alias** (a second domain showing the same site): `hosting_websites_add-domain` with `type: "parked"`.
+- **Subdomain** (`shop.example.com`): `hosting_websites_add-domain` with `type: "subdomain"`. `www` belongs to the main domain — do not create it as a subdomain.
 
 Agency Plan:
 
@@ -40,20 +40,20 @@ Agency Plan:
 
 ## 3. Point DNS at Hostinger
 
-**DNS already at Hostinger** (nameservers end in `dns-parking.com`): creating the website normally writes the records. Read the zone with `dns_records_list`; when `@` and `www` already point at the site, change nothing. Before any edit, note the newest `dns_snapshots_list` entry — `dns_snapshots_restore` rolls back to it.
+**DNS already at Hostinger** (nameservers end in `dns-parking.com`): keep the domain's existing `*.dns-parking.com` nameserver pair and do not change its nameservers. Creating the website normally writes the records. Read the zone with `dns_records_list`; when `@` and `www` already point at the site, change nothing. Before any edit, note the newest `dns_snapshots_list` entry — `dns_snapshots_restore` rolls back to it.
 
 `dns_records_update` defaults to `overwrite: true`, which deletes every existing record with the same name and type. Adding a `TXT` at `@` that way wipes SPF and verification records. Send `overwrite: false` when adding; use `true` only to replace one record set on purpose, and run `dns_records_validate` on the same payload first.
 
 **DNS elsewhere** (registered at Hostinger with other nameservers, or registered elsewhere). Two options — let the user choose:
 
-- **Switch nameservers to Hostinger.** Hostinger then manages every record. First copy each record the current DNS serves beyond the website — `MX`, `TXT`, service `CNAME`s — into the Hostinger zone with `dns_records_update` (`overwrite: false`); otherwise email breaks when the nameservers flip. Hostinger's nameserver pairs differ between domains (`ns1`/`ns2.dns-parking.com`, `solar`/`lunar.dns-parking.com` and others), so use the pair hPanel shows for this domain, never a guessed one. For Hostinger-registered domains apply it with `domains_portfolio_update-nameservers`; otherwise the user changes it at their registrar.
+- **Switch nameservers to Hostinger.** Hostinger then manages every record. First copy each record the current DNS serves beyond the website — `MX`, `TXT`, service `CNAME`s — into the Hostinger zone with `dns_records_update` (`overwrite: false`); otherwise email breaks when the nameservers flip. Hostinger's nameserver pairs differ between domains, and DNS resolves only on the pair the domain belongs to. Use the pair hPanel shows for the domain (Nameservers page → "Use Hostinger nameservers"), or ask the user for it. Never guess nameservers, and never use `ns1`/`ns2.dns-parking.com`. For Hostinger-registered domains apply it with `domains_portfolio_update-nameservers`; otherwise the user changes it at their registrar.
 - **Keep the current DNS provider** and change only the web records: `A` for `@` and `CNAME` (or `A`) for `www`. Agency sites point at `details.ipv4`. Shared and Cloud sites point at the targets in the Hostinger zone for the domain (`dns_records_list`) or, when that zone does not exist, the IP hPanel shows for the website. The user makes this change at their DNS provider.
 
 ## 4. SSL and HTTPS
 
 Start only once `dig` shows the domain resolving to Hostinger — the certificate authority checks the domain against the server.
 
-- Shared and Cloud: `hosting_ssl_status`. When it is not `active`, call `hosting_ssl_install` and poll the status until `active` (or `failed` with `last_error`), then `hosting_ssl_toggle-https-redirect` with `is_enabled: true` (it returns 422 until a certificate exists).
+- Shared and Cloud: `ssl` in `hosting_websites_get-settings`. When `ssl.status` is not `active`, call `hosting_ssl_install` and poll `hosting_websites_get-settings` until it is `active` (or `failed` with `last_error`), then `hosting_websites_update-settings` with `httpsRedirect: true` (it changes nothing until the certificate is `active`).
 - Agency: `agency-hosting_ssl_install-website` for each domain, then poll `agency-hosting_ssl_website-status`. A domain allows three setups per seven days and one request a minute — install once DNS is right and never loop.
 - A `CAA` record at the apex that does not allow `letsencrypt.org` blocks issuance; the user adds `0 issue "letsencrypt.org"` beside the existing ones.
 
