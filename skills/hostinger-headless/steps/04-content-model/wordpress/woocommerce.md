@@ -5,9 +5,47 @@ a **WooCommerce store** (`site.json → woocommerce.enabled: true`) — a brief 
 `**WordPress + WooCommerce**` (one site: content **and** commerce).
 
 **WooCommerce is not a separate backend.** It is the `woocommerce` plugin on a normal headless WordPress
-install at `/cms` (installed in the provision step). This cookbook is the authoritative home for the store
+install at `/cms` (installed at provision Step 4, checked in §0). This cookbook is the authoritative home for the store
 data layer: how to **seed and CRUD** products, categories and coupons, and how the **storefront** reads
 the cart, coupons and checkout.
+
+---
+
+## 0 — Provision: verify, record `site.json`
+
+Read from [`../../03-provision/wordpress/SKILL.md`](../../03-provision/wordpress/SKILL.md) Step 5.
+
+**Verify the store endpoints (public, no auth).** Allow a moment for WooCommerce's installer to create
+its tables and the Shop/Cart/Checkout pages. Provision Step 4's `list-installed` poll is the install
+check: `wordpress_plugins_check-if-woo-commerce-is-installed` answers `is_installed: false` on a headless
+`/cms` install even with WooCommerce active, so don't use it.
+
+| Check | How | Expect |
+|---|---|---|
+| Store API answers | `GET https://<domain>/cms/wp-json/wc/store/v1/products?per_page=1` | 200 (empty until content-model seeds — fine) |
+| Both namespaces loaded | `GET https://<domain>/cms/wp-json/` → `namespaces` | contains `wc/store/v1` **and** `wc/v3` |
+
+Pretty permalinks are on by default on a headless install, so the Store API resolves immediately; if a
+store route ever 404s, the permalink structure is the thing to check.
+
+Then add the `woocommerce` block and the store URLs to `site.json` (provision Step 6; `backend` stays
+`"wordpress"`). Checkout stays off until the owner sets it up (§4), so `payment_enabled` starts `false`:
+
+```json
+{
+  "woocommerce": {
+    "enabled": true,
+    "seeded_via": "per-site-wp-mcp",
+    "currency": "<currency_code from GET {store_api}/products or the install default>",
+    "payment_enabled": false,
+    "checkout_setup": "owner enables a payment method + shipping in wp-admin"
+  },
+  "urls": {
+    "store_api": "https://<domain>/cms/wp-json/wc/store/v1",
+    "wc_rest_api": "https://<domain>/cms/wp-json/wc/v3"
+  }
+}
+```
 
 ---
 
