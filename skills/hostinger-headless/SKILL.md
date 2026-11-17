@@ -164,26 +164,19 @@ hostinger.com has already created the website before you run, so the domain *has
 but an instance existing does **not** mean provision is done or can be skipped. `check_state` works out
 which of these cases applies and records it, then provision takes the matching path:
 
-1. **An empty headless shell already exists for the domain (the common onboarding case).** Onboarding
-   creates the website first — an **empty headless shell** (`hosting_websites_create { type:
-   "headless_empty" }`): `website_type` is `headless`, but **no backend is installed** (no WordPress at
-   `/cms`, no store). This still goes through provision, which **adopts the shell and swaps it to the
-   chosen backend** (the backend is picked in refine first): WordPress is installed into the shell's
-   `/cms` with `wordpress_installations_install { type: "headless" }`, or the shell is adopted as the
-   Ecommerce storefront host. **Never skip provision for a shell, and never create a second site.** See
-   the provision router's *Onboarding handoff*.
-2. **No instance exists at all** (the user ran the headless flow without onboarding provisioning
-   anything). Provision creates a fresh headless instance with `hosting_websites_create` using the
-   chosen backend's own `type`.
+1. **An empty headless shell already exists for the domain (the common onboarding case).** Provision
+   **adopts the shell and swaps it to the chosen backend** (the backend is picked in refine first).
+   **Never skip provision for a shell, and never create a second site.** See the provision router's
+   *Onboarding handoff*.
+2. **No instance exists at all.** Provision creates a fresh headless instance with
+   `hosting_websites_create` using the chosen backend's own `type`.
 3. **User wants a webapp.** Provision is a plain Node.js app host, not headless — `webapp` ignores
    headless shells entirely and is only reached by experimental actions, never the onboarding flow.
 
 Either way the create/install is asynchronous and returns `queued` immediately, then it takes a few
-minutes — **what to wait on depends on the path**: a fresh `hosting_websites_create` is `wait.mjs setup`
-(until `hosting_websites_list-setups` says `completed`), while a shell swap
-(`wordpress_installations_install`) creates no new setup, so it's `wait.mjs cms` (until the `/cms` row of
-`wordpress_installations_list` is valid). Run it at the join, not at the fire: by then the prepare work
-has usually outlasted the job, so it returns at once. The single rule that makes the overlap safe:
+minutes; the backend's provision step names the `wait.mjs` command to run at the join, not at the fire.
+By then the prepare work has usually outlasted the job, so it returns at once. The single rule that
+makes the overlap safe:
 
 > **Fire provision (Hostinger runs it asynchronously), then do every stage's prepare work while it settles. The
 > moment a step must write to the live instance, it waits for provision to report ready (via the
@@ -192,13 +185,15 @@ has usually outlasted the job, so it returns at once. The single rule that makes
 ### Waiting on Hostinger: `wait.mjs`
 
 `wait.mjs` (next to this file) waits for a slow Hostinger job in one command, so you don't spend a turn
-on every check:
+on every check. Run it, like `push-content.mjs`, from the home folder (`cd "$HOME" && …`): both
+start the Hostinger MCP server with the user's sign-in, and a version manager's `node` (asdf, mise)
+runs whatever Node the current project's `.tool-versions` names:
 
 ```bash
-node <skill>/wait.mjs setup <domain>              # a fresh site's setup → completed
-node <skill>/wait.mjs cms <domain> <username>     # a shell swap's WordPress install at /cms → valid
-node <skill>/wait.mjs build <domain> <buildUuid>  # the deploy build → completed, then the root serves 200
-node <skill>/wait.mjs live <domain>               # the root serves 200
+cd "$HOME" && node <skill>/wait.mjs setup <domain>              # a fresh site's setup → completed
+cd "$HOME" && node <skill>/wait.mjs cms <domain> <username>     # a shell swap's WordPress install at /cms → valid
+cd "$HOME" && node <skill>/wait.mjs build <domain> <buildUuid>  # the deploy build → completed, then the root serves 200 (http:// while SSL is pending)
+cd "$HOME" && node <skill>/wait.mjs live <domain>               # the root serves 200
 ```
 
 Run it in the foreground, with a `--timeout` just under your tool's command limit (e.g. `--timeout 9m`
