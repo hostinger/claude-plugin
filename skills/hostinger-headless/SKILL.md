@@ -48,10 +48,9 @@ Hostinger connector's OAuth token. **This recipe is not a security boundary.**
 ## The flow stages - STEPS TO FOLLOW
 
 Work through the steps in the order below, each reading its recipe and writing its artifact into the
-site workspace `~/.hostinger/<domain>/`. 
-
-
-The order is sequencial run and check the whole headless flow:
+site workspace `~/.hostinger/<domain>/`. The one exception is content prepare (step 4) and design
+(step 5): with a subagent tool, run them at the same time, as *Content and design at the same time*
+says.
 
 | # | Stage                                                                                                              | Skill / source                                                        | Writes | Instance? |
 |---|--------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------|---|---|
@@ -79,8 +78,7 @@ The other 9 numbered steps live under `steps/` and are read from the installed s
 **One concurrency rule:** two *independent* stages in a single session may run at once, but never
 two writers of the same artifact, and never two agents/windows on the same domain — the `.lock`
 (Step 1) guards that. Parallelism is always *optional*: an agent that can't interleave work runs the
-steps serially and is still correct. Saying this, Always that you consider, you can run the steps
-in parallel using different threads or processes to save time, but always ensure the right output.
+steps serially and is still correct (see *Content and design at the same time*).
 
 Steps can generate **State files** those files are only hints; the truth is what the Hostinger connector reports, so
 verify a "done" marker against reality before acting on it. If a step's `SKILL.md` is missing from the installed skill folder, stop and tell
@@ -144,7 +142,8 @@ keep the language you were using.
 ### One instance per headless site (the core invariant)
 
 > **A headless site is exactly one website.** The frontend is served at the site root and WordPress
-> lives at `/cms` **on the same domain** — one instance, one domain. There is **never** a second
+> lives at `/cms` **on the same domain** (a PocketBase backend at `/api` and `/_/` of the same domain) —
+> one instance, one domain. There is **never** a second
 > website for the same build and **never** a separate CMS domain: the CMS is always the `/cms` path of
 > the site's own domain (`https://<domain>/cms`), not `cms.<domain>` or any other host. Provision
 > therefore **adopts and swaps** an existing headless shell rather than creating another site, and a
@@ -165,13 +164,16 @@ but an instance existing does **not** mean provision is done or can be skipped. 
 which of these cases applies and records it, then provision takes the matching path:
 
 1. **An empty headless shell already exists for the domain (the common onboarding case).** Provision
-   **adopts the shell and swaps it to the chosen backend** (the backend is picked in refine first).
-   **Never skip provision for a shell, and never create a second site.** See the provision router's
-   *Onboarding handoff*.
+   **adopts the shell and swaps it to the chosen backend** (the backend is picked in refine first):
+   WordPress into `/cms`, the shell as the Ecommerce storefront host, or a PocketBase backend created
+   on it with `hosting_pocketbase_create-backend` (which turns the `headless_empty` site into
+   `headless_pocketbase`). **Never skip provision for a shell, and never create a second site.** See
+   the provision router's *Onboarding handoff*.
 2. **No instance exists at all.** Provision creates a fresh headless instance with
-   `hosting_websites_create` using the chosen backend's own `type`.
-3. **User wants a webapp.** Provision is a plain Node.js app host, not headless — `webapp` ignores
-   headless shells entirely and is only reached by experimental actions, never the onboarding flow.
+   `hosting_websites_create` using the chosen backend's own `type` (`headless_wordpress`,
+   `headless_ecommerce` or `headless_pocketbase`; a PocketBase site gets its backend at the join).
+
+Every backend is a headless website: there is no plain Node.js app host in this flow.
 
 Either way the create/install is asynchronous and returns `queued` immediately, then it takes a few
 minutes; the backend's provision step names the `wait.mjs` command to run at the join, not at the fire.
@@ -181,6 +183,34 @@ makes the overlap safe:
 > **Fire provision (Hostinger runs it asynchronously), then do every stage's prepare work while it settles. The
 > moment a step must write to the live instance, it waits for provision to report ready (via the
 > backend step's readiness poll — see above). That wait is the *instance barrier*.**
+
+### Content and design at the same time
+
+Content prepare and design are the two slow prepare stages, and neither needs the other. **If you
+have a subagent tool** (Claude Code's Agent tool, for one), **launch content prepare in one background
+subagent as soon as provision fires and the user has answered the image-source question, before you
+do any content work yourself**, and design while it
+runs. A helper you use only to fetch pages doesn't count. **If you have none, run content prepare
+then design, one after the other**, as the table lists them. Either way the output is the same.
+
+1. **Ask what the subagent can't.** A subagent can't talk to the user, so before you launch it, ask
+   content's one question yourself: the image source (`steps/04-content-model/SKILL.md` → *Images*).
+2. **Launch the content subagent** with the instructions in `steps/04-content-model/SKILL.md` →
+   *Prepare in a subagent*. It does all of content prepare; nothing else writes its files while it
+   runs.
+3. **Do design yourself, meanwhile** (`steps/05-design/SKILL.md`): its one question to the user stays
+   with you.
+4. **Wait for the subagent before the frontend step**, which reads `content-model.md`. When it
+   reports, end its stage in the run log, check the files it names exist and note its gaps for the
+   final report. Set `state.json` → `stage` to `frontend` only once both the subagent has reported and
+   `design.md` is written, so a resume never skips either. The push, Hostinger AI images and
+   every other write to the live site stay with you, after the instance barrier.
+5. **When the subagent's report resumes you, finish the whole flow**: the content push at the
+   instance barrier, the frontend, validate, deploy, then done, whose final report must include the
+   *Steps completed* table (`steps/09-done/SKILL.md`).
+
+You alone write `state.json` and the run log; log the overlap as two open stages (see *Run log and
+build report*).
 
 ### Waiting on Hostinger: `wait.mjs`
 
@@ -194,6 +224,7 @@ cd "$HOME" && node <skill>/wait.mjs setup <domain>              # a fresh site's
 cd "$HOME" && node <skill>/wait.mjs cms <domain> <username>     # a shell swap's WordPress install at /cms → valid
 cd "$HOME" && node <skill>/wait.mjs build <domain> <buildUuid>  # the deploy build → completed, then the root serves 200 (http:// while SSL is pending)
 cd "$HOME" && node <skill>/wait.mjs live <domain>               # the root serves 200
+cd "$HOME" && node <skill>/wait.mjs pocketbase <domain>         # a PocketBase backend's /api/health serves 200
 ```
 
 Run it in the foreground, with a `--timeout` just under your tool's command limit (e.g. `--timeout 9m`
@@ -235,6 +266,8 @@ took from it.
 | `site.json` | provision | chosen backend, username, install id, all URLs |
 | `content-model.md` | content model | entities, fields, pages, navigation |
 | `content.json` | content model (WordPress) | the drafted content `push-content.mjs` pushes |
+| `pocketbase/schema.json` | content model (PocketBase) | collections, access rules, indexes, rate limits, seed records |
+| `.pocketbase/credentials.json` | provision (PocketBase) | the backend's superuser email and one-time password; mode `600`, never deployed, never printed |
 | `design.md` (+ `brand/` logo files) | design | chosen design direction: tokens, type, logo, components, per-page composition, accessibility |
 | `src/` | frontend | the website source implementing `design.md`; framework choice is recorded in `state.json → frontend` |
 | `deploy.json` | deploy | build id, deployed at, live URLs |
@@ -303,6 +336,15 @@ to it, joined with `&&` (e.g. `node <skill>/run-log.mjs <domain> next deploy && 
 `next` at a boundary rather than a `stage-end` plus a `stage-start`. When the stage ending wasn't plain
 `ok` or needs a note, put its `stage-end` first in the same command. `next` refuses when two stages are
 open and names them; end them with `stage-end`.
+
+**Content and design overlapping** (see *Content and design at the same time*) are two open stages.
+Start both when you launch the subagent, and end each when it finishes:
+
+```bash
+node <skill>/run-log.mjs <domain> next content_model --phase prepare && node <skill>/run-log.mjs <domain> stage-start design
+node <skill>/run-log.mjs <domain> stage-end design ok                        # design.md written
+node <skill>/run-log.mjs <domain> stage-end content_model ok --phase prepare  # the subagent finished
+```
 
 **Follow-ups continue the run.** When the user asks for a change after the final report in the
 same session (a layout fix, a copy tweak, a redeploy), that work belongs to the run it follows:
