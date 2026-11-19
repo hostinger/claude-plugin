@@ -10,7 +10,8 @@ the project **source** and it uploads it, runs `npm install` + the build script 
 serves the result. **Out:** `deploy.json`.
 
 This is an **instance-barrier** step: run it only after `provision.status == "completed"` and validate
-(if run) has passed. All operations go through the connector (`execute`).
+has passed (on a first deploy that includes its dependency audit, even when the rest of validate is
+skipped). All operations go through the connector (`execute`).
 
 > **Connected to the hosted server (`mcp.hostinger.com`)?** Its `hosting_deploy` deploys Git
 > repositories only and cannot read a local `path`. Run this step through the local
@@ -19,7 +20,8 @@ This is an **instance-barrier** step: run it only after `provision.status == "co
 
 > **With a shell and the Hostinger CLI installed**, the same deploy is one command, with the build
 > settings passed exactly as the table below says. Run it from the project, since it links the current directory:
-> `cd ~/.hostinger/<domain>/src && hostinger up --domain <domain> --type nodejs --app-type <appType> --output-directory <dir> --build-script build --node-version 22 --package-manager npm --yes --format json`.
+> `cd ~/.hostinger/<domain>/src && hostinger up --domain <domain> --type nodejs --app-type <appType> --output-directory <dir> --build-script build --node-version 22 --package-manager npm --message "<what this deploy changes, like a commit message>" --yes --format json`.
+> If it fails with `unknown flag: --message` (an older CLI), run `brew upgrade hostinger/tap/hostinger` or rerun it without `--message`.
 > It uploads, builds, waits and returns `data.buildUuid` and `data.buildState`; add `--no-wait` to
 > return at once and wait with `cd "$HOME" && node <skill>/wait.mjs build <domain> <uuid>`. Then continue at
 > "Verify" below. Recent CLI versions see that the site is headless (`data.headless: true`) and
@@ -124,6 +126,9 @@ Delete the temp directory once the build in Step 4 is `completed`.
 Pass the framework's build settings **inline** on the deploy call — there is no separate settings step.
 `path` is the absolute path of the archive from Step 2, in its temp directory. Never pass a path under
 `~/.hostinger/`, the `src/` directory included: the deploy refuses it (see Step 2).
+`message` says what this deploy ships, written like a commit message (first line under 72 characters,
+at most 500): it labels the deploy in the website's deployment history, which otherwise shows only the
+archive's file name.
 
 ```json
 { "operation": "hosting_deploy",
@@ -136,7 +141,8 @@ Pass the framework's build settings **inline** on the deploy call — there is n
     "nodeVersion": 22,
     "buildScript": "build",
     "packageManager": "npm",
-    "rootDirectory": "." } }
+    "rootDirectory": ".",
+    "message": "<one-line summary of what this deploy ships, e.g. Add pricing page>" } }
 ```
 
 `hosting_deploy` uploads the source and triggers `npm install` + the build **end-to-end** — do not call
