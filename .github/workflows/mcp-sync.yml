@@ -103,4 +103,8 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.token.outputs.token }}
           PR_NUMBER: ${{ steps.cpr.outputs.pull-request-number }}
-        run: gh pr merge "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --squash --auto
+        # --auto fails with "Pull request is in clean status" when the PR is already
+        # mergeable; merge it directly then.
+        run: |
+          gh pr merge "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --squash --auto \
+            || gh pr merge "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --squash

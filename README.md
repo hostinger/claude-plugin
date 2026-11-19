@@ -53,18 +53,31 @@ upstream, not here.
 ## Installation
 
 ```bash
+/plugin marketplace add anthropics/claude-plugins-official
 /plugin install hostinger@claude-plugins-official
+```
+
+The first line is needed once, on installs that don't list `claude-plugins-official`
+yet. The official marketplace can lag behind this repository; to install the latest
+version straight from here:
+
+```bash
+/plugin marketplace add hostinger/claude-plugin
+/plugin install hostinger@hostinger
 ```
 
 ## Authentication
 
-On first use, the MCP server opens your browser for OAuth sign-in. No API token
-needed.
+Sign in through your browser once: run `/mcp`, pick **hostinger** and choose
+**Authenticate**. No API token needed.
 
-Alternatively, set an API token from [hPanel](https://hpanel.hostinger.com/api):
+The hosted server signs in with OAuth only, so `HOSTINGER_API_TOKEN` has no effect
+on it. To use an API token from [hPanel](https://hpanel.hostinger.com/api) instead
+(CI, scripts), add the local server from npm. It has the same tools, so the skills
+work with it too:
 
 ```bash
-export HOSTINGER_API_TOKEN="your-token-here"
+claude mcp add hostinger-api -e HOSTINGER_API_TOKEN=your-token -- npx -y -p @hostinger/mcp hostinger-api-mcp
 ```
 
 ## Examples
