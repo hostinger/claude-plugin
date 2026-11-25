@@ -1,0 +1,15 @@
+{
+  "name": "hostinger",
+  "owner": {
+    "name": "Hostinger",
+    "url": "https://www.hostinger.com"
+  },
+  "description": "Hostinger plugin for Claude Code, straight from its repository.",
+  "plugins": [
+    {
+      "name": "hostinger",
+      "source": "./",
+      "description": "Deploy, manage and monitor Hostinger services from Claude Code, with skills for web hosting and VPS."
+    }
+  ]
+}

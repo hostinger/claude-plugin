@@ -32,6 +32,19 @@ Plus seven **web hosting skills** for Shared, Cloud and Agency plans:
 | `migrate-to-hosting` | Move a site from another host, tested before DNS moves |
 | `hostinger-headless` | Build a new site from a prompt, optionally with a store or a WordPress backend |
 
+And five **VPS skills** for KVM plans:
+
+| Skill | Use for |
+|---|---|
+| `deploy-to-vps` | Deploy a project to a VPS: SSH access, firewall, Docker Compose through the Docker Manager or a systemd service behind nginx with Let's Encrypt, domain, verify |
+| `troubleshoot-vps` | A server that is unreachable, down, slow, out of disk or running a broken service — cause and fix, with recovery mode and restore as last resorts |
+| `provision-vps` | Pick plan, location and template, buy only after confirmation, set up or reinstall, first SSH login |
+| `secure-vps` | Firewall with only the ports in use, SSH keys instead of passwords, Monarx malware scanning, backup status |
+| `audit-vps` | Read-only review of every VPS with a prioritised to-do list |
+
+Every VPS skill asks before an action that stops, wipes, overwrites or deletes,
+and before a purchase.
+
 The agent picks the right one from your request; you can also name a skill. The
 skills come from [hostinger/api-mcp-server](https://github.com/hostinger/api-mcp-server)
 and are synced into `skills/` with `node scripts/sync-skills.mjs` — change them
@@ -40,18 +53,31 @@ upstream, not here.
 ## Installation
 
 ```bash
+/plugin marketplace add anthropics/claude-plugins-official
 /plugin install hostinger@claude-plugins-official
+```
+
+The first line is needed once, on installs that don't list `claude-plugins-official`
+yet. The official marketplace can lag behind this repository; to install the latest
+version straight from here:
+
+```bash
+/plugin marketplace add hostinger/claude-plugin
+/plugin install hostinger@hostinger
 ```
 
 ## Authentication
 
-On first use, the MCP server opens your browser for OAuth sign-in. No API token
-needed.
+Sign in through your browser once: run `/mcp`, pick **hostinger** and choose
+**Authenticate**. No API token needed.
 
-Alternatively, set an API token from [hPanel](https://hpanel.hostinger.com/api):
+The hosted server signs in with OAuth only, so `HOSTINGER_API_TOKEN` has no effect
+on it. To use an API token from [hPanel](https://hpanel.hostinger.com/api) instead
+(CI, scripts), add the local server from npm. It has the same tools, so the skills
+work with it too:
 
 ```bash
-export HOSTINGER_API_TOKEN="your-token-here"
+claude mcp add hostinger-api -e HOSTINGER_API_TOKEN=your-token -- npx -y -p @hostinger/mcp hostinger-api-mcp
 ```
 
 ## Examples
@@ -61,6 +87,8 @@ export HOSTINGER_API_TOKEN="your-token-here"
 > Deploy this Next.js app to example.com
 > List all my domains
 > Show VPS server metrics for the last 24 hours
+> Deploy this docker-compose app to my VPS
+> Audit my VPS servers and tell me what needs attention
 > Create an A record pointing example.com to 1.2.3.4
 > What hosting plans do I have?
 ```
